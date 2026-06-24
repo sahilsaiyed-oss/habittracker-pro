@@ -2,31 +2,36 @@ import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 
 export function middleware(request: NextRequest) {
-  // Check if token exists in cookies
+  // 1. Browser ke cookies mein se Token nikaalo
   const token = request.cookies.get('token')?.value;
   const { pathname } = request.nextUrl;
 
-  // Paths that require being logged out (Login/Signup)
-  const authPaths = ['/login', '/signup'];
-  
-  // Paths that require being logged in
-  const protectedPaths = ['/dashboard', '/habits', '/matrix', '/analytics', '/settings'];
+  // 2. Define karo kaunse raste (routes) protected hain
+  const isProtectedRoute = 
+    pathname === '/' || 
+    pathname.startsWith('/dashboard') || 
+    pathname.startsWith('/habits') || 
+    pathname.startsWith('/analytics') || 
+    pathname.startsWith('/matrix') || 
+    pathname.startsWith('/settings');
 
-  // 1. Redirect to login if trying to access protected page without token
-  if (!token && protectedPaths.some(path => pathname.startsWith(path))) {
+  // 3. Define karo Auth pages (Login/Signup)
+  const isAuthPage = pathname === '/login' || pathname === '/signup';
+
+  // LOGIC A: Agar token NAHI hai aur user protected page par ja raha hai -> Redirect to Login
+  if (!token && isProtectedRoute) {
     return NextResponse.redirect(new URL('/login', request.url));
   }
 
-  // 2. Redirect to dashboard if logged in but trying to access login/signup
-  if (token && authPaths.includes(pathname)) {
+  // LOGIC B: Agar token HAI aur user Login/Signup par ja raha hai -> Redirect to Dashboard
+  if (token && isAuthPage) {
     return NextResponse.redirect(new URL('/dashboard', request.url));
   }
 
   return NextResponse.next();
 }
 
+// Ye config batata hai ki middleware har file par chalna chahiye (except images/api)
 export const config = {
-  matcher: [
-    '/((?!api|_next/static|_next/image|favicon.ico).*)',
-  ],
+  matcher: ['/((?!api|_next/static|_next/image|favicon.ico).*)'],
 }

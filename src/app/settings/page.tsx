@@ -20,15 +20,24 @@ export default function SettingsPage() {
   const [habits, setHabits] = useState<Habit[]>([]);
 
   useEffect(() => {
-    fetch(`${API}/habits/?archived=false`)
+    const token = localStorage.getItem("token"); // Auth Token
+    fetch(`${API}/habits/?archived=false`, {
+        headers: { "Authorization": `Bearer ${token}` }
+    })
       .then((r) => r.json())
-      .then((d) => setHabits(d));
+      .then((d) => {
+          if (Array.isArray(d)) setHabits(d);
+      });
   }, []);
 
   async function updateColor(habitId: number, color: string) {
+    const token = localStorage.getItem("token"); // Auth Token
     await fetch(`${API}/habits/${habitId}`, {
       method: "PATCH",
-      headers: { "Content-Type": "application/json" },
+      headers: { 
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${token}` 
+      },
       body: JSON.stringify({ color }),
     });
     setHabits((prev) => prev.map((h) => (h.id === habitId ? { ...h, color } : h)));

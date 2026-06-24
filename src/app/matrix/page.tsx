@@ -5,84 +5,59 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Check, X, Minus, ChevronLeft, ChevronRight, Lock } from "lucide-react";
 import { 
-  format, 
-  startOfMonth, 
-  endOfMonth, 
-  eachDayOfInterval, 
-  isSameDay, 
-  isBefore, 
-  isAfter,
-  startOfToday,
-  addMonths,
-  subMonths
+  format, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay, isBefore, isAfter, startOfToday, addMonths, subMonths
 } from "date-fns";
 import { cn } from "@/lib/utils";
 
 const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
-interface Habit {
-  id: number;
-  name: string;
-  color: string;
-}
-
-interface Log {
-  id: number;
-  habit_id: number;
-  date: string;
-  status: string;
-}
-
 export default function MatrixPage() {
-  const [habits, setHabits] = useState<Habit[]>([]);
-  const [logs, setLogs] = useState<Log[]>([]);
+  const [habits, setHabits] = useState<any[]>([]);
+  const [logs, setLogs] = useState<any[]>([]);
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const today = startOfToday();
   const todayStr = format(today, "yyyy-MM-dd");
 
   async function fetchData() {
+    const token = localStorage.getItem("token");
     try {
-      const habitsRes = await fetch(`${API}/habits/?archived=false`);
+      const habitsRes = await fetch(`${API}/habits/?archived=false`, {
+          headers: { "Authorization": `Bearer ${token}` }
+      });
       const habitsData = await habitsRes.json();
+      if (!Array.isArray(habitsData)) return;
+
       const allLogs = await Promise.all(
-        habitsData.map((h: Habit) => fetch(`${API}/habits/${h.id}/logs`).then((r) => r.json()))
+        habitsData.map((h: any) => fetch(`${API}/habits/${h.id}/logs`, {
+            headers: { "Authorization": `Bearer ${token}` }
+        }).then((r) => r.json()))
       );
-      setHabits(habitsData);
-      setLogs(allLogs.flat());
-    } catch (e) {
-      console.error("Fetch error:", e);
-    }
+      setHabits(habitsData); setLogs(allLogs.flat());
+    } catch (e) { console.error("Fetch error:", e); }
   }
 
-  useEffect(() => {
-    fetchData();
-  }, []);
+  useEffect(() => { fetchData(); }, []);
 
-  const daysInMonth = useMemo(() => {
-    return eachDayOfInterval({
-      start: startOfMonth(currentMonth),
-      end: endOfMonth(currentMonth),
-    });
-  }, [currentMonth]);
+  const daysInMonth = useMemo(() => eachDayOfInterval({
+    start: startOfMonth(currentMonth),
+    end: endOfMonth(currentMonth),
+  }), [currentMonth]);
 
   const hasUserActiveToday = useMemo(() => {
     return logs.some(l => l.date === todayStr && (l.status === "done" || l.status === "missed"));
   }, [logs, todayStr]);
 
-  const nextMonth = () => setCurrentMonth(addMonths(currentMonth, 1));
-  const prevMonth = () => setCurrentMonth(subMonths(currentMonth, 1));
-
   return (
     <div className="max-w-7xl mx-auto space-y-6 animate-in fade-in zoom-in duration-500 p-4">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-4xl font-black tracking-tighter uppercase text-primary">Consistency Matrix</h1>
-          <p className="text-muted-foreground font-medium">Synced history of your Dashboard decisions.</p>
+          <h1 className="text-4xl font-black tracking-tighter uppercase text-primary italic">Consistency Matrix</h1>
+          <p className="text-muted-foreground font-medium uppercase tracking-widest text-[10px]">Synced history of your Dashboard decisions.</p>
         </div>
         <div className="flex items-center gap-4 bg-card border-2 rounded-2xl p-2 shadow-xl">
-          <Button variant="ghost" size="icon" onClick={prevMonth} className="hover:bg-primary/10 rounded-xl"><ChevronLeft /></Button>
+          <Button variant="ghost" size="icon" onClick={() => setCurrentMonth(subMonths(currentMonth, 1))} className="hover:bg-primary/10 rounded-xl"><ChevronLeft /></Button>
           <span className="font-black text-sm uppercase min-w-[140px] text-center tracking-widest">{format(currentMonth, "MMMM yyyy")}</span>
-          <Button variant="ghost" size="icon" onClick={nextMonth} className="hover:bg-primary/10 rounded-xl"><ChevronRight /></Button>
+          <Button variant="ghost" size="icon" onClick={() => setCurrentMonth(addMonths(currentMonth, 1))} className="hover:bg-primary/10 rounded-xl"><ChevronRight /></Button>
         </div>
       </div>
 
@@ -121,7 +96,6 @@ export default function MatrixPage() {
 
                     let cellUI = { color: "bg-muted/10", icon: null, shadow: "" };
 
-                    // NEW LOGIC: If it's a future date, IGNORE DB and show as Planned
                     if (isFuture) {
                         cellUI = { color: "bg-muted/10 border-2 border-dashed border-muted/50", icon: null, shadow: "" };
                     } 
@@ -159,26 +133,6 @@ export default function MatrixPage() {
           </table>
         </CardContent>
       </Card>
-
-      {/* Legend */}
-      <div className="flex flex-wrap items-center gap-6 p-6 bg-card border-2 rounded-2xl shadow-sm">
-        <div className="flex items-center gap-3">
-            <div className="w-5 h-5 rounded-lg bg-green-500"></div> 
-            <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Achieved</span>
-        </div>
-        <div className="flex items-center gap-3">
-            <div className="w-5 h-5 rounded-lg bg-red-500"></div> 
-            <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Failed</span>
-        </div>
-        <div className="flex items-center gap-3">
-            <div className="w-5 h-5 rounded-lg bg-amber-500"></div> 
-            <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Skipped</span>
-        </div>
-        <div className="flex items-center gap-3 border-l pl-6">
-            <div className="w-5 h-5 rounded-lg bg-muted border-2 border-dashed"></div> 
-            <span className="text-[10px] font-black uppercase tracking-widest opacity-40">Planned Future</span>
-        </div>
-      </div>
     </div>
   );
 }

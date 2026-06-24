@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 
 export default function Home() {
-  redirect("/dashboard");
+  // Middleware automatically handle kar lega, par default redirection /login par rakho
+  redirect("/login");
 }

@@ -2,7 +2,8 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.core.database import engine, Base
 from app.routers import habits, analytics
-from app.routers import habits, analytics, auth 
+from app.routers import habits, analytics, auth, goals 
+from app.routers import habits, analytics, auth, goals, reports
 import asyncio
 
 app = FastAPI(title="Habit Tracker Pro API")
@@ -18,6 +19,8 @@ app.add_middleware(
 app.include_router(auth.router)
 app.include_router(habits.router)
 app.include_router(analytics.router)
+app.include_router(goals.router)
+app.include_router(reports.router)
 
 @app.on_event("startup")
 async def startup():

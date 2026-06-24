@@ -2,8 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Flame, Target, TrendingUp, CheckCircle2, Clock, Check, X, AlertCircle } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
+import { Flame, Target, TrendingUp, CheckCircle2, Clock, Check, X, Star } from "lucide-react";
+import { motion } from "framer-motion";
 import { format, startOfToday } from "date-fns";
 import { cn } from "@/lib/utils";
 
@@ -16,10 +16,15 @@ export default function DashboardPage() {
   const todayStr = format(startOfToday(), "yyyy-MM-dd");
 
   async function fetchData() {
+    const token = localStorage.getItem("token");
     try {
-      const habitsRes = await fetch(`${API}/habits/?archived=false`);
+      const habitsRes = await fetch(`${API}/habits/?archived=false`, {
+        headers: { "Authorization": `Bearer ${token}` }
+      });
       const habitsData = await habitsRes.json();
-      const allLogs = await Promise.all(habitsData.map((h: any) => fetch(`${API}/habits/${h.id}/logs`).then((r) => r.json())));
+      const allLogs = await Promise.all(habitsData.map((h: any) => 
+        fetch(`${API}/habits/${h.id}/logs`, { headers: { "Authorization": `Bearer ${token}` } }).then((r) => r.json())
+      ));
       setHabits(habitsData); setLogs(allLogs.flat());
     } catch (e) { console.error(e); } finally { setLoading(false); }
   }
@@ -30,7 +35,7 @@ export default function DashboardPage() {
   const doneToday = todayLogs.filter((l) => l.status === "done").length;
   const progress = habits.length > 0 ? Math.round((doneToday / habits.length) * 100) : 0;
 
-  if (loading) return <div className="p-20 text-center text-2xl font-black animate-pulse uppercase">Syncing Command Center...</div>;
+  if (loading) return <div className="p-20 text-center font-black animate-pulse uppercase">Syncing Command Center...</div>;
 
   return (
     <div className="max-w-6xl mx-auto space-y-10 p-4 animate-in fade-in duration-700">
@@ -39,7 +44,6 @@ export default function DashboardPage() {
         <p className="text-muted-foreground font-bold uppercase tracking-[0.3em] text-xs ml-1">Live Feed: {format(startOfToday(), "EEEE, MMM do")}</p>
       </motion.header>
 
-      {/* Stats Grid */}
       <div className="grid gap-6 md:grid-cols-4">
         {[
           { label: "Active", val: habits.length, icon: Target, cls: "bg-blue-600 shadow-blue-500/40" },
@@ -69,40 +73,28 @@ export default function DashboardPage() {
                     const status = todayLogs.find((l) => l.habit_id === h.id)?.status || "-";
                     return (
                     <motion.div key={h.id} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.1 }}>
-                        <Card className={cn(
-                            "border-2 transition-all duration-500 rounded-[2rem] overflow-hidden",
-                            status === "done" ? "border-emerald-500/50 bg-emerald-500/5" : 
-                            status === "missed" ? "border-red-500/50 bg-red-500/5" : "border-muted bg-card"
-                        )}>
+                        <Card className={cn("border-2 rounded-[2rem] overflow-hidden", status === "done" ? "border-emerald-500/50 bg-emerald-500/5" : status === "missed" ? "border-red-500/50 bg-red-500/5" : "border-muted bg-card")}>
                         <CardContent className="p-6 flex items-center justify-between">
                             <div className="flex items-center gap-6">
-                                <div className={cn(
-                                    "h-16 w-16 rounded-2xl flex items-center justify-center text-3xl font-black text-white shadow-2xl transition-transform hover:rotate-6",
-                                    h.color === 'emerald' ? 'bg-emerald-500' : 
-                                    h.color === 'violet' ? 'bg-violet-500' : 'bg-rose-500'
-                                )}>
+                                <div className={cn("h-16 w-16 rounded-2xl flex items-center justify-center text-3xl font-black text-white shadow-2xl", h.color === 'emerald' ? 'bg-emerald-500' : h.color === 'violet' ? 'bg-violet-500' : 'bg-rose-500')}>
                                     {h.name[0]}
                                 </div>
                                 <div>
-                                    <h3 className="text-2xl font-black tracking-tighter">{h.name}</h3>
-                                    <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Protocol Active</p>
+                                    <h3 className="text-2xl font-black tracking-tighter flex items-center gap-2">
+                                        {h.name} {h.is_strategic && <Star className="h-4 w-4 fill-primary text-primary" />}
+                                    </h3>
+                                    <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">
+                                        {h.is_strategic ? "Strategically Linked" : "Protocol Active"}
+                                    </p>
                                 </div>
                             </div>
-
-                            {/* READ ONLY STATUS BADGE */}
                             <div className="flex items-center">
                                 {status === "done" ? (
-                                    <div className="flex items-center gap-2 bg-emerald-500 text-white px-6 py-2 rounded-full font-black text-sm shadow-lg shadow-emerald-500/40">
-                                        <Check className="stroke-[4px] h-4 w-4" /> DONE
-                                    </div>
+                                    <div className="flex items-center gap-2 bg-emerald-500 text-white px-6 py-2 rounded-full font-black text-sm shadow-lg"><Check className="stroke-[4px] h-4 w-4" /> DONE</div>
                                 ) : status === "missed" ? (
-                                    <div className="flex items-center gap-2 bg-red-500 text-white px-6 py-2 rounded-full font-black text-sm shadow-lg shadow-red-500/40">
-                                        <X className="stroke-[4px] h-4 w-4" /> MISSED
-                                    </div>
+                                    <div className="flex items-center gap-2 bg-red-500 text-white px-6 py-2 rounded-full font-black text-sm shadow-lg"><X className="stroke-[4px] h-4 w-4" /> MISSED</div>
                                 ) : (
-                                    <div className="flex items-center gap-2 bg-muted text-muted-foreground px-6 py-2 rounded-full font-black text-sm border-2 border-dashed border-muted-foreground/20">
-                                        <Clock className="h-4 w-4" /> PENDING
-                                    </div>
+                                    <div className="flex items-center gap-2 bg-muted text-muted-foreground px-6 py-2 rounded-full font-black text-sm border-2 border-dashed border-muted-foreground/20"><Clock className="h-4 w-4" /> PENDING</div>
                                 )}
                             </div>
                         </CardContent>
@@ -120,28 +112,13 @@ export default function DashboardPage() {
             <Card className="border-none rounded-[3rem] bg-zinc-900 text-white shadow-2xl p-10 overflow-hidden relative group">
                 <div className="absolute inset-0 bg-gradient-to-br from-primary/20 to-transparent opacity-50" />
                 <div className="relative z-10 text-center space-y-6">
-                    <motion.p 
-                        key={progress}
-                        initial={{ scale: 1.5, color: "#fff" }}
-                        animate={{ scale: 1 }}
-                        className="text-8xl font-black tracking-tighter"
-                    >
-                        {progress}%
-                    </motion.p>
+                    <motion.p key={progress} initial={{ scale: 1.5, color: "#fff" }} animate={{ scale: 1 }} className="text-8xl font-black tracking-tighter">{progress}%</motion.p>
                     <p className="text-xs font-black uppercase tracking-[0.4em] text-primary">System Integrity</p>
                     <div className="h-3 w-full bg-white/10 rounded-full overflow-hidden p-0.5 border border-white/5">
-                        <motion.div 
-                            className="h-full bg-primary rounded-full shadow-[0_0_20px_var(--primary)]"
-                            initial={{ width: 0 }}
-                            animate={{ width: `${progress}%` }}
-                            transition={{ duration: 1.5, ease: "anticipate" }}
-                        />
+                        <motion.div className="h-full bg-primary rounded-full shadow-[0_0_20px_var(--primary)]" initial={{ width: 0 }} animate={{ width: `${progress}%` }} transition={{ duration: 1.5, ease: "anticipate" }} />
                     </div>
                 </div>
             </Card>
-            <p className="text-center text-[10px] font-bold text-muted-foreground uppercase tracking-tighter px-10">
-                Update status in the Habit Inventory to see changes here.
-            </p>
         </div>
       </div>
     </div>
