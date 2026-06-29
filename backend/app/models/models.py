@@ -20,10 +20,10 @@ class User(Base):
     xp = Column(Integer, default=0)
     level = Column(Integer, default=1)
 
-    habits = relationship("Habit", back_populates="owner")
-    goals = relationship("Goal", back_populates="owner")
-    journals = relationship("Journal", back_populates="owner")
-    reports = relationship("Report", back_populates="owner")
+    habits = relationship("Habit", back_populates="owner", cascade="all, delete-orphan")
+    goals = relationship("Goal", back_populates="owner", cascade="all, delete-orphan")
+    journals = relationship("Journal", back_populates="owner", cascade="all, delete-orphan")
+    reports = relationship("Report", back_populates="owner", cascade="all, delete-orphan")
 
 class Habit(Base):
     __tablename__ = "habits"
@@ -81,8 +81,17 @@ class Journal(Base):
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     date = Column(Date, nullable=False)
-    content = Column(String, nullable=False)
-    mood_score = Column(Integer, default=3)
+    title = Column(String, nullable=False)
+    mood = Column(String, nullable=False)
+    reflection = Column(String, nullable=False)
+    wins = Column(String, nullable=True)
+    challenges = Column(String, nullable=True)
+    lessons = Column(String, nullable=True)
+    tomorrow_plan = Column(String, nullable=True)
+    gratitude = Column(String, nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
     owner = relationship("User", back_populates="journals")
 
 class RecoveryDay(Base):
@@ -95,11 +104,41 @@ class Report(Base):
     __tablename__ = "reports"
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"))
-    type = Column(String) # 'weekly' or 'monthly'
-    period_label = Column(String) # e.g., "Week 25, 2026"
-    data = Column(JSON) # Immutable Snapshot
+    type = Column(String) 
+    period_label = Column(String) 
+    data = Column(JSON) 
     created_at = Column(DateTime, default=datetime.utcnow)
-
+    
     owner = relationship("User", back_populates="reports")
-    # Prevent duplicate snapshots for the same period
     __table_args__ = (UniqueConstraint("user_id", "type", "period_label", name="uix_report_period"),)
+
+class VisionImage(Base):
+    __tablename__ = "vision_images"
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"))
+    url = Column(String, nullable=False) # Local path or URL
+    is_primary = Column(Boolean, default=False)
+    is_favorite = Column(Boolean, default=False)
+    category = Column(String, default="General") # Dream House, Car, etc.
+    created_at = Column(DateTime, default=datetime.utcnow)
+    owner = relationship("User")
+
+class VisionMedia(Base):
+    __tablename__ = "vision_media"
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"))
+    type = Column(String) # 'music' or 'video'
+    title = Column(String, nullable=False)
+    source = Column(String, nullable=False) # URL or local path
+    platform = Column(String) # 'youtube', 'spotify', 'local'
+    is_favorite = Column(Boolean, default=False)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    owner = relationship("User")
+
+class AIMotivationCache(Base):
+    __tablename__ = "ai_motivation_cache"
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"))
+    date = Column(Date, nullable=False)
+    content = Column(String, nullable=False)
+    type = Column(String) # 'motivation' or 'quote'

@@ -2,7 +2,6 @@ from pydantic import BaseModel
 from datetime import date, datetime
 from typing import Optional, List
 
-# --- HABIT SCHEMAS ---
 class HabitCreate(BaseModel):
     name: str
     description: Optional[str] = None
@@ -31,14 +30,10 @@ class HabitOut(BaseModel):
     difficulty: int
     importance: int
     created_at: date
-    # NEW: Strategic Indicators
     is_strategic: bool = False
     linked_goal_title: Optional[str] = None
+    class Config: from_attributes = True
 
-    class Config:
-        from_attributes = True
-
-# --- DAILY LOG SCHEMAS ---
 class DailyLogCreate(BaseModel):
     habit_id: int
     date: date
@@ -54,7 +49,6 @@ class DailyLogOut(BaseModel):
     status: str
     class Config: from_attributes = True
 
-# --- GOAL SCHEMAS ---
 class MilestoneOut(BaseModel):
     id: int
     title: str
@@ -85,7 +79,6 @@ class GoalOut(BaseModel):
     linked_habits: List[HabitOut] = []
     class Config: from_attributes = True
 
-# --- ANALYTICS SCHEMAS ---
 class AnalyticsOut(BaseModel):
     active_habits: int
     completion_rate: float
@@ -94,32 +87,54 @@ class AnalyticsOut(BaseModel):
     heatmap: List[dict]
     today_score: float
 
-# --- JOURNAL SCHEMAS ---
 class JournalCreate(BaseModel):
-    content: str
-    mood_score: int = 3
     date: date
+    title: str
+    mood: str
+    reflection: str
+    wins: Optional[str] = None
+    challenges: Optional[str] = None
+    lessons: Optional[str] = None
+    tomorrow_plan: Optional[str] = None
+    gratitude: Optional[str] = None
 
 class JournalOut(BaseModel):
     id: int
-    content: str
-    mood_score: int
     date: date
+    title: str
+    mood: str
+    reflection: str
+    wins: Optional[str]
+    challenges: Optional[str]
+    lessons: Optional[str]
+    tomorrow_plan: Optional[str]
+    gratitude: Optional[str]
+    created_at: datetime
     class Config: from_attributes = True
 
-class WeeklyReviewOut(BaseModel):
+class JournalStats(BaseModel):
+    total_entries: int
+    current_streak: int
+    ai_status: str
+    maturity_percentage: float
+
+class VisionImageOut(BaseModel):
     id: int
-    start_date: date
-    end_date: date
-    data: dict
+    url: str
+    is_primary: bool
+    is_favorite: bool
+    category: str
     class Config: from_attributes = True
 
-class MonthlyReportOut(BaseModel):
+class VisionMediaOut(BaseModel):
     id: int
-    month: int
-    year: int
-    data: dict
+    type: str
+    title: str
+    source: str
+    platform: str
+    is_favorite: bool
     class Config: from_attributes = True
 
-class RecoveryDayCreate(BaseModel):
+class AIMotivationOut(BaseModel):
+    content: str
     date: date
