@@ -33,6 +33,7 @@ const itemVariants = {
 export default function DashboardPage() {
   const [habits, setHabits] = useState<any[]>([]);
   const [logs, setLogs] = useState<any[]>([]);
+  const [streak, setStreak] = useState<number>(0); // NEW: Streak state
   const [briefing, setBriefing] = useState<string>("");
   const [loading, setLoading] = useState(true);
   const [aiLoading, setAiLoading] = useState(false);
@@ -44,13 +45,27 @@ export default function DashboardPage() {
     const token = localStorage.getItem("token");
     const headers = { "Authorization": `Bearer ${token}` };
     try {
+      // Fetch Habits
       const habitsRes = await fetch(`${API}/habits/?archived=false`, { headers });
       const habitsData = await habitsRes.json();
+      
+      // Fetch Logs
       const allLogs = await Promise.all(habitsData.map((h: any) => 
         fetch(`${API}/habits/${h.id}/logs`, { headers }).then((r) => r.json())
       ));
-      setHabits(habitsData); setLogs(allLogs.flat());
-    } catch (e) { console.error(e); } finally { setLoading(false); }
+
+      // Fetch Actual Streak from Analytics Engine
+      const statsRes = await fetch(`${API}/analytics/stats`, { headers });
+      const statsData = await statsRes.json();
+      
+      setHabits(habitsData); 
+      setLogs(allLogs.flat());
+      setStreak(statsData.current_streak || 0); // Update streak state
+    } catch (e) { 
+      console.error(e); 
+    } finally { 
+      setLoading(false); 
+    }
   }
 
   const fetchAiBriefing = async () => {
@@ -83,7 +98,11 @@ export default function DashboardPage() {
   const missionStatus = progress === 100 ? "SUPERIOR" : progress > 0 ? "STABLE" : "STAGNANT";
   const threatLevel = progress > 70 ? "LOW" : progress > 30 ? "MEDIUM" : "HIGH";
 
-  if (loading) return <div className="p-20 text-center font-black animate-pulse uppercase tracking-widest text-2xl">Initializing Tactical Interface...</div>;
+  // PATCH Logic: Streak shows consecutive days AFTER the first day.
+  const adjustedStreak = Math.max(0, streak - 1);
+  const streakDisplay = `${adjustedStreak} ${adjustedStreak === 1 ? "Day" : "Days"}`;
+
+  if (loading) return <div className="p-20 text-center font-black animate-pulse uppercase tracking-widest text-2xl text-foreground">Initializing Tactical Interface...</div>;
 
   return (
     <motion.div 
@@ -162,7 +181,7 @@ export default function DashboardPage() {
                     { label: "Active", val: habits.length, icon: Target, cls: "bg-blue-600 shadow-blue-500/40" },
                     { label: "Achieved", val: doneToday, icon: CheckCircle2, cls: "bg-emerald-600 shadow-emerald-500/40" },
                     { label: "Goal", val: `${progress}%`, icon: TrendingUp, cls: "bg-violet-600 shadow-violet-500/40" },
-                    { label: "Streak", val: "1 Day", icon: Flame, cls: "bg-orange-600 shadow-orange-500/40" }
+                    { label: "Streak", val: streakDisplay, icon: Flame, cls: "bg-orange-600 shadow-orange-500/40" }
                 ].map((stat, i) => (
                     <motion.div key={stat.label} variants={itemVariants}>
                         <Card className={cn(
@@ -250,8 +269,8 @@ export default function DashboardPage() {
             </h2>
             <Card className={cn(
               "rounded-[3rem] p-10 overflow-hidden relative group h-fit sticky top-10 transition-all duration-300 hover:shadow-3xl",
-              "bg-card border-2 border-border text-card-foreground shadow-2xl", // Base / Light
-              "dark:bg-zinc-900 dark:border-none dark:text-white" // Dark overrides
+              "bg-card border-2 border-border text-card-foreground shadow-2xl", 
+              "dark:bg-zinc-900 dark:border-none dark:text-white"
             )}>
                 <div className="absolute inset-0 bg-gradient-to-br from-primary/10 to-transparent opacity-50 dark:from-primary/20" />
                 <div className="relative z-10 text-center space-y-6">
@@ -265,7 +284,6 @@ export default function DashboardPage() {
                     </motion.p>
                     <p className="text-xs font-black uppercase tracking-[0.4em] text-primary">System Integrity</p>
                     
-                    {/* Progress Bar Track Fix for Light Mode */}
                     <div className="h-4 w-full bg-muted dark:bg-white/10 rounded-full overflow-hidden p-1 border border-border dark:border-white/5">
                         <motion.div 
                             className="h-full bg-primary rounded-full shadow-[0_0_15px_rgba(0,0,0,0.1)] dark:shadow-[0_0_20px_var(--primary)]" 

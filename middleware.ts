@@ -8,12 +8,10 @@ export function middleware(request: NextRequest) {
   const authRoutes = ['/login', '/signup'];
   const isAuthPage = authRoutes.includes(pathname);
 
-  // 1. Agar token NAHI hai aur user login/signup ke alawa kahi bhi ja raha hai -> Force Login
   if (!token && !isAuthPage) {
     return NextResponse.redirect(new URL('/login', request.url));
   }
 
-  // 2. Agar token HAI aur user login/signup par ja raha hai -> Force Dashboard
   if (token && isAuthPage) {
     return NextResponse.redirect(new URL('/dashboard', request.url));
   }

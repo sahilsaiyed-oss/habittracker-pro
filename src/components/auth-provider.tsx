@@ -27,8 +27,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         const payload = JSON.parse(atob(token.split(".")[1]));
         if (payload.exp * 1000 > Date.now()) {
           setIsAuthenticated(true);
-        } else { logout(); }
-      } catch (e) { logout(); }
+        } else { 
+            logout(); 
+        }
+      } catch (e) { 
+          logout(); 
+      }
     } else {
       setIsAuthenticated(false);
     }
@@ -37,36 +41,42 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const isAuthPage = pathname === "/login" || pathname === "/signup";
 
   if (isAuthenticated === null) {
-    return <div className="h-screen w-full bg-background flex items-center justify-center font-black uppercase italic tracking-widest">Establishing Secure Uplink...</div>;
+    return (
+      <div className="h-screen w-full bg-background flex items-center justify-center font-black uppercase italic tracking-widest text-foreground">
+        Establishing Secure Uplink...
+      </div>
+    );
   }
 
   return (
     <AuthContext.Provider value={{ logout, isAuthenticated }}>
-      <div className="relative min-h-screen flex">
+      <div className="relative min-h-screen flex overflow-hidden">
         
         {/* 
-            SIDEBAR & CONTENT WRAPPER:
-            Jab user login nahi hai, ye section blur rahega aur pointer-events-none 
-            ki wajah se click block kar dega.
+            THE UNIFIED SHELL:
+            Surgical Fix: Reduced blur from 25px/15px down to 8px/4px
+            for better visibility while maintaining the 'locked' feel.
         */}
         <div className={cn(
-            "flex flex-1 transition-all duration-1000",
-            (!isAuthenticated && !isAuthPage) ? "blur-[20px] pointer-events-none grayscale opacity-30 select-none scale-[1.01]" : ""
+            "flex flex-1 transition-all duration-700",
+            (!isAuthenticated && !isAuthPage) ? "blur-[8px] pointer-events-none grayscale opacity-40 scale-[1.01]" : "",
+            (isAuthPage) ? "blur-[4px] pointer-events-none opacity-50" : ""
         )}>
             <Sidebar />
             <main className="flex-1 overflow-auto bg-background">
-                {children}
+                {(isAuthenticated || isAuthPage) ? children : null}
             </main>
         </div>
 
-        {/* LOGIN OVERLAY: Pure screen ke upar aayega agar login nahi hai */}
-        {(!isAuthenticated && !isAuthPage) && (
-          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-background/20 backdrop-blur-md">
-             <div className="w-full max-w-md animate-in zoom-in-95 duration-500">
-                <LoginPage isOverlay={true} />
+        {/* THE GATE OVERLAY */}
+        {(!isAuthenticated || isAuthPage) && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-transparent">
+             <div className="w-full max-w-md animate-in zoom-in-95 duration-500 shadow-[0_0_100px_rgba(0,0,0,0.1)] rounded-[3.5rem]">
+                {pathname === "/signup" ? children : <LoginPage isOverlay={true} />}
              </div>
           </div>
         )}
+
       </div>
     </AuthContext.Provider>
   );

@@ -42,13 +42,13 @@ export default function AnalyticsPage() {
     <div className="max-w-6xl mx-auto space-y-12 p-6 pb-20 animate-in fade-in duration-700">
       <header className="space-y-2">
         <h1 className="text-5xl font-black tracking-tighter text-foreground uppercase italic border-b-8 border-primary w-fit pb-2">Analytics</h1>
-        <p className="text-muted-foreground text-lg font-medium tracking-tight">Performance intelligence and habit trajectory.</p>
+        <p className="text-muted-foreground text-lg font-medium tracking-tight">Track your progress and daily performance.</p>
       </header>
 
       {/* 1. OVERVIEW GRID */}
       <div className="grid gap-6 md:grid-cols-3">
-        <StatCard label="Today's Score" val={`${data.today_score || 0}%`} icon={Activity} desc="Weighted Daily Progress" />
-        <StatCard label="7-Day Average" val={`${data.completion_rate || 0}%`} icon={TrendingUp} desc="Consistency Integrity" />
+        <StatCard label="Today's Score" val={`${data.today_score || 0}%`} icon={Activity} desc="Daily Progress" />
+        <StatCard label="7-Day Average" val={`${data.completion_rate || 0}%`} icon={TrendingUp} desc="Weekly Average" />
         <StatCard label="Active Habits" val={data.active_habits || 0} icon={CheckCircle2} desc="Operational Protocols" />
       </div>
 
@@ -56,7 +56,7 @@ export default function AnalyticsPage() {
       <Card className="border-4 shadow-xl rounded-[2.5rem] overflow-hidden bg-card transition-all hover:shadow-2xl">
         <CardHeader className="border-b bg-muted/30 py-6 px-8">
           <CardTitle className="text-sm font-black uppercase tracking-[0.3em] text-primary flex items-center gap-2">
-            <BarChart3 className="h-5 w-5" /> Weekly Performance Trend
+            <BarChart3 className="h-5 w-5" /> Weekly Progress Graph
           </CardTitle>
         </CardHeader>
         <CardContent className="p-8 h-96">
@@ -135,7 +135,7 @@ export default function AnalyticsPage() {
         <Card className="border-4 shadow-lg rounded-[2rem] bg-card">
           <CardHeader className="border-b bg-muted/30 py-6 px-8">
             <CardTitle className="text-sm font-black uppercase tracking-[0.3em] text-primary flex items-center gap-2">
-              <Calendar className="h-5 w-5" /> 90-Day Consistency
+              <Calendar className="h-5 w-5" /> 90-Day Activity
             </CardTitle>
           </CardHeader>
           <CardContent className="p-8">
@@ -154,8 +154,8 @@ export default function AnalyticsPage() {
                 ))}
             </div>
             <div className="mt-8 flex justify-center gap-6 text-[10px] font-black uppercase tracking-widest opacity-40">
-                <div className="flex items-center gap-2"><div className="w-2 h-2 bg-muted rounded-full"/> Cold</div>
-                <div className="flex items-center gap-2"><div className="w-2 h-2 bg-primary rounded-full shadow-[0_0_5px_hsl(var(--primary))]"/> On Fire</div>
+                <div className="flex items-center gap-2"><div className="w-2 h-2 bg-muted rounded-full"/> Getting Started</div>
+                <div className="flex items-center gap-2"><div className="w-2 h-2 bg-primary rounded-full shadow-[0_0_5px_hsl(var(--primary))]"/> Excellent</div>
             </div>
           </CardContent>
         </Card>

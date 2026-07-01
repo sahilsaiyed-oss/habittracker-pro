@@ -41,14 +41,14 @@ export default function LoginPage({ isOverlay = false }: { isOverlay?: boolean }
   };
 
   return (
-    <div className={cn("flex items-center justify-center", !isOverlay && "min-h-screen bg-muted/10 px-4")}>
+    <div className={cn("flex items-center justify-center", !isOverlay && "min-h-screen bg-background px-4")}>
       <Card className="w-full max-w-md border-4 rounded-[3.5rem] shadow-2xl bg-card border-border">
         <CardHeader className="flex flex-col items-center">
           <div className="h-12 w-12 rounded-2xl bg-primary flex items-center justify-center mb-4">
              <LockKeyhole className="h-6 w-6 text-primary-foreground" />
           </div>
           <CardTitle className="text-4xl font-black uppercase italic tracking-tighter text-foreground">Login</CardTitle>
-          <CardDescription className="font-bold text-muted-foreground uppercase text-[10px] tracking-widest">
+          <CardDescription className="font-bold text-muted-foreground uppercase text-[10px] tracking-widest text-center">
             Enter valid credentials to unlock system
           </CardDescription>
         </CardHeader>
@@ -67,7 +67,9 @@ export default function LoginPage({ isOverlay = false }: { isOverlay?: boolean }
             <Button className="w-full h-14 rounded-2xl font-black uppercase text-base bg-foreground text-background" disabled={loading}>
                 {loading ? "Verifying..." : "Login"}
             </Button>
-            <p className="text-xs font-bold text-muted-foreground uppercase">New? <Link href="/signup" className="text-primary hover:underline italic">Create Account</Link></p>
+            <p className="text-xs font-bold text-muted-foreground uppercase text-center">
+              New? <Link href="/signup" className="text-primary hover:underline italic">Create Account</Link>
+            </p>
           </CardFooter>
         </form>
       </Card>
